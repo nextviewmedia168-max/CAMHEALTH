@@ -16,15 +16,17 @@ const ai = new GoogleGenAI({
 });
 
 // POST /api/symptoms
-app.post("/api/symptoms", async (req, res) => {
+app.post(["/api/symptoms", "/symptoms"], async (req, res) => {
+  let reqLanguage = 'en';
   try {
     const { text, history, language } = req.body;
+    if (language) reqLanguage = language;
     
     const systemInstruction = `You are a helpful AI health assistant for a mobile app in Cambodia.
 The user is describing their symptoms or health concerns. Provide preliminary insights and caring advice.
 Important Constraints:
 - ALWAYS include a clear disclaimer that this is NOT a definitive medical diagnosis and they should consult a healthcare professional.
-- The output language MUST strictly match the requested language (which is: ${language}). If Khmer, speak fluently in Khmer.
+- The output language MUST strictly match the requested language (which is: ${reqLanguage}). If Khmer, speak fluently in Khmer.
 - Be concise, supportive, and use markdown bullet points where appropriate.
 - Act like a live chat agent.`;
 
@@ -39,7 +41,7 @@ Important Constraints:
     });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-3.1-flash-lite",
       contents: chatHistory,
       config: {
         systemInstruction,
@@ -49,14 +51,14 @@ Important Constraints:
     
     // Check if the response was blocked by safety settings or returned empty
     if (!response.candidates || response.candidates.length === 0) {
-      return res.json({ result: language === 'Khmer' 
+      return res.json({ result: reqLanguage === 'Khmer' 
         ? "សូមអភ័យទោស ខ្ញុំមិនអាចឆ្លើយតបទៅនឹងសំណួរនេះបានទេ។ សូមព្យាយាមពន្យល់បន្ថែមអំពីបញ្ហារបស់អ្នកចុះ។"
         : "I'm sorry, but I can't generate a response for that. Could you please provide more details about your symptoms?" });
     }
 
     let replyText = response.text || "";
     if (!replyText) {
-       replyText = language === 'Khmer' ? "សូមអភ័យទោស មានបញ្ហាក្នុងការវិភាគ។" : "Sorry, there was an issue analyzing your input.";
+       replyText = reqLanguage === 'Khmer' ? "សូមអភ័យទោស មានបញ្ហាក្នុងការវិភាគ។" : "Sorry, there was an issue analyzing your input.";
     }
     
     res.json({ result: replyText });
@@ -65,13 +67,13 @@ Important Constraints:
     
     // Check for rate limit
     if (error?.status === 429 || error?.message?.includes('429')) {
-       return res.status(429).json({ result: language === 'Khmer' ? 'សូមអភ័យទោស ប្រព័ន្ធកំពុងមមាញឹក។ សូមព្យាយាមម្តងទៀតក្នុងរយៈពេលមួយនាទី។' : 'Sorry, the system is currently busy (Rate Limit). Please try again in a minute.' });
+       return res.status(429).json({ result: reqLanguage === 'Khmer' ? 'សូមអភ័យទោស ប្រព័ន្ធកំពុងមមាញឹក។ សូមព្យាយាមម្តងទៀតក្នុងរយៈពេលមួយនាទី។' : 'Sorry, the system is currently busy (Rate Limit). Please try again in a minute.' });
     }
     
     res.status(500).json({ 
       error: "Failed to fetch response", 
       details: error?.message,
-      result: language === 'Khmer' 
+      result: reqLanguage === 'Khmer' 
         ? "សូមអភ័យទោស បច្ចុប្បន្នប្រព័ន្ធមានបញ្ហា។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។" 
         : "Sorry, the system encountered an error. Please try again later."
     });
@@ -79,16 +81,18 @@ Important Constraints:
 });
 
 // POST /api/summarize
-app.post("/api/summarize", async (req, res) => {
+app.post(["/api/summarize", "/summarize"], async (req, res) => {
+  let reqLanguage = 'en';
   try {
     const { history, language } = req.body;
+    if (language) reqLanguage = language;
     
     const systemInstruction = `You are a helpful UI assistant.
 The user wants a concise, bulleted summary of the patient's reported symptoms and timeline based ONLY on the chat history provided.
 This summary is intended to be shown directly to a doctor to quickly get up to speed.
 Keep it strictly factual, clear, and professional. 
 Do not include any greeting or conversational filler.
-Output the summary in the requested language: ${language}.`;
+Output the summary in the requested language: ${reqLanguage}.`;
 
     const chatHistory = (history || []).map((msg: any) => ({
        role: msg.role === 'user' ? 'user' : 'model',
@@ -96,7 +100,7 @@ Output the summary in the requested language: ${language}.`;
     }));
 
     if (chatHistory.length === 0) {
-       return res.json({ result: language === 'Khmer' ? 'គ្មានរោគសញ្ញាត្រូវបានរាយការណ៍ទេ។' : 'No symptoms reported yet.' });
+       return res.json({ result: reqLanguage === 'Khmer' ? 'គ្មានរោគសញ្ញាត្រូវបានរាយការណ៍ទេ។' : 'No symptoms reported yet.' });
     }
 
     chatHistory.push({
@@ -105,7 +109,7 @@ Output the summary in the requested language: ${language}.`;
     });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-3.1-flash-lite",
       contents: chatHistory,
       config: {
         systemInstruction,
@@ -115,14 +119,14 @@ Output the summary in the requested language: ${language}.`;
     
     // Check if the response was blocked by safety settings or returned empty
     if (!response.candidates || response.candidates.length === 0) {
-      return res.json({ result: language === 'Khmer' 
+      return res.json({ result: reqLanguage === 'Khmer' 
         ? "មិនអាចបង្កើតការសង្ខេបបានទេ។ សូមសាកល្បងម្ដងទៀត។"
         : "Could not generate summary. Please try again." });
     }
 
     let summaryText = response.text || "";
     if (!summaryText) {
-       summaryText = language === 'Khmer' ? "មានបញ្ហាក្នុងការបង្កើតការសង្ខេប។" : "There was an issue generating the summary.";
+       summaryText = reqLanguage === 'Khmer' ? "មានបញ្ហាក្នុងការបង្កើតការសង្ខេប។" : "There was an issue generating the summary.";
     }
     
     res.json({ result: summaryText });
@@ -130,12 +134,12 @@ Output the summary in the requested language: ${language}.`;
     console.error("Gemini API Summarize Error:", error);
     
     if (error?.status === 429 || error?.message?.includes('429')) {
-       return res.status(429).json({ result: language === 'Khmer' ? 'សូមអភ័យទោស ប្រព័ន្ធកំពុងមមាញឹក។ សូមព្យាយាមម្តងទៀតក្នុងរយៈពេលមួយនាទី។' : 'Sorry, the system is currently busy (Rate Limit). Please try again in a minute.' });
+       return res.status(429).json({ result: reqLanguage === 'Khmer' ? 'សូមអភ័យទោស ប្រព័ន្ធកំពុងមមាញឹក។ សូមព្យាយាមម្តងទៀតក្នុងរយៈពេលមួយនាទី។' : 'Sorry, the system is currently busy (Rate Limit). Please try again in a minute.' });
     }
     
     res.status(500).json({ 
       error: "Failed to generate summary.", 
-      result: language === 'Khmer' 
+      result: reqLanguage === 'Khmer' 
         ? "មានបញ្ហាបច្ចេកទេសក្នុងការបង្កើតការសង្ខេប។" 
         : "Technical error generating summary." 
     });
@@ -143,7 +147,7 @@ Output the summary in the requested language: ${language}.`;
 });
 
 // POST /api/tts
-app.post("/api/tts", async (req, res) => {
+app.post(["/api/tts", "/tts"], async (req, res) => {
    try {
      const { text, language } = req.body;
      const langCode = language === 'km' ? 'km' : 'en';
@@ -177,7 +181,7 @@ app.post("/api/tts", async (req, res) => {
    }
 });
 
-app.get('/api/tts/proxy', async (req, res) => {
+app.get(['/api/tts/proxy', '/tts/proxy'], async (req, res) => {
   try {
     const targetUrl = req.query.url as string;
     if (!targetUrl) return res.status(400).send("Missing URL");

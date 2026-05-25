@@ -144,6 +144,11 @@ export default function SymptomChecker() {
          })
        });
        
+       const contentType = response.headers.get("content-type");
+       if (!contentType || !contentType.includes("application/json")) {
+         throw new Error(`Server returned non-JSON response (${response.status})`);
+       }
+
        const data = await response.json();
        if (data.result) {
           setSummaryText(data.result);
@@ -267,6 +272,11 @@ export default function SymptomChecker() {
          body: JSON.stringify({ text: cleanText, language: 'km' }) 
       });
       
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+         throw new Error(`TTS API failed to return JSON (${response.status})`);
+      }
+
       const data = await response.json();
       if (!response.ok || !data.audioUrls) {
          throw new Error(data.error || 'TTS request failed');
@@ -403,8 +413,15 @@ export default function SymptomChecker() {
         })
       });
       
-      const data = await response.json();
-      const reply = data.result || 'Sorry, there was an error analyzing your symptoms.';
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+         data = await response.json();
+      } else {
+         throw new Error(response.status === 504 ? "Server timeout (took too long). Please try again." : `Server returned an error (${response.status})`);
+      }
+      
+      const reply = data.result || data.error || 'Sorry, there was an error analyzing your symptoms.';
       
       const botMsg = { id: (Date.now() + 1).toString(), sender: 'bot' as const, text: reply };
       const finalMessages = [...updatedMessages, botMsg];
@@ -419,8 +436,9 @@ export default function SymptomChecker() {
          return prev;
       });
       speakText(reply, botMsg.id);
-    } catch (error) {
-      const errMsg = { id: (Date.now() + 1).toString(), sender: 'bot' as const, text: 'Network error. Please try again later.' };
+    } catch (error: any) {
+      console.error("Fetch error:", error);
+      const errMsg = { id: (Date.now() + 1).toString(), sender: 'bot' as const, text: error?.message || 'Network error. Please try again later.' };
       const errMessages = [...updatedMessages, errMsg];
       setSessions(prev => {
          const existingIndex = prev.findIndex(s => s.id === targetSessionId);
