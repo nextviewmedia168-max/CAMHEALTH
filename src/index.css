@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Kantumruy Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-khmer-bold: "Kantumruy Pro", ui-sans-serif, system-ui, sans-serif;
+}
+
+body, html, input, button, select, textarea {
+  font-family: "Kantumruy Pro", ui-sans-serif, system-ui, sans-serif !important;
+}
+
+/* Make heavy elements soft & highly readable */
+.font-bold, .khmer-bold, b, strong {
+  font-weight: 600 !important;
+}
+
+.font-extrabold, .font-black {
+  font-weight: 700 !important; /* Cap heavy weights to regular bold so they don't look chunky or overlapping */
+}
+
+@utility pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 0.5rem);
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 20px);
+}
+
+/* Smooth layout and scrolling across all preview devices */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}

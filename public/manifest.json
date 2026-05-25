@@ -1,0 +1,28 @@
+{
+  "short_name": "CamHealth",
+  "name": "CamHealth - Cambodia Mobile Health Wallet",
+  "description": "Kingdom of Cambodia National Mobile Health Wallet for personal records, medication reminders, offline maps, and symptom checking.",
+  "icons": [
+    {
+      "src": "/bot.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "display": "standalone",
+  "orientation": "portrait-primary"
+}
