@@ -47,10 +47,34 @@ Important Constraints:
       }
     });
     
-    res.json({ result: response.text });
-  } catch (error) {
+    // Check if the response was blocked by safety settings or returned empty
+    if (!response.candidates || response.candidates.length === 0) {
+      return res.json({ result: language === 'Khmer' 
+        ? "សូមអភ័យទោស ខ្ញុំមិនអាចឆ្លើយតបទៅនឹងសំណួរនេះបានទេ។ សូមព្យាយាមពន្យល់បន្ថែមអំពីបញ្ហារបស់អ្នកចុះ។"
+        : "I'm sorry, but I can't generate a response for that. Could you please provide more details about your symptoms?" });
+    }
+
+    let replyText = response.text || "";
+    if (!replyText) {
+       replyText = language === 'Khmer' ? "សូមអភ័យទោស មានបញ្ហាក្នុងការវិភាគ។" : "Sorry, there was an issue analyzing your input.";
+    }
+    
+    res.json({ result: replyText });
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
-    res.status(500).json({ error: "Failed to fetch response" });
+    
+    // Check for rate limit
+    if (error?.status === 429 || error?.message?.includes('429')) {
+       return res.status(429).json({ result: language === 'Khmer' ? 'សូមអភ័យទោស ប្រព័ន្ធកំពុងមមាញឹក។ សូមព្យាយាមម្តងទៀតក្នុងរយៈពេលមួយនាទី។' : 'Sorry, the system is currently busy (Rate Limit). Please try again in a minute.' });
+    }
+    
+    res.status(500).json({ 
+      error: "Failed to fetch response", 
+      details: error?.message,
+      result: language === 'Khmer' 
+        ? "សូមអភ័យទោស បច្ចុប្បន្នប្រព័ន្ធមានបញ្ហា។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។" 
+        : "Sorry, the system encountered an error. Please try again later."
+    });
   }
 });
 
@@ -89,10 +113,32 @@ Output the summary in the requested language: ${language}.`;
       }
     });
     
-    res.json({ result: response.text });
-  } catch (error) {
+    // Check if the response was blocked by safety settings or returned empty
+    if (!response.candidates || response.candidates.length === 0) {
+      return res.json({ result: language === 'Khmer' 
+        ? "មិនអាចបង្កើតការសង្ខេបបានទេ។ សូមសាកល្បងម្ដងទៀត។"
+        : "Could not generate summary. Please try again." });
+    }
+
+    let summaryText = response.text || "";
+    if (!summaryText) {
+       summaryText = language === 'Khmer' ? "មានបញ្ហាក្នុងការបង្កើតការសង្ខេប។" : "There was an issue generating the summary.";
+    }
+    
+    res.json({ result: summaryText });
+  } catch (error: any) {
     console.error("Gemini API Summarize Error:", error);
-    res.status(500).json({ error: "Failed to generate summary." });
+    
+    if (error?.status === 429 || error?.message?.includes('429')) {
+       return res.status(429).json({ result: language === 'Khmer' ? 'សូមអភ័យទោស ប្រព័ន្ធកំពុងមមាញឹក។ សូមព្យាយាមម្តងទៀតក្នុងរយៈពេលមួយនាទី។' : 'Sorry, the system is currently busy (Rate Limit). Please try again in a minute.' });
+    }
+    
+    res.status(500).json({ 
+      error: "Failed to generate summary.", 
+      result: language === 'Khmer' 
+        ? "មានបញ្ហាបច្ចេកទេសក្នុងការបង្កើតការសង្ខេប។" 
+        : "Technical error generating summary." 
+    });
   }
 });
 
