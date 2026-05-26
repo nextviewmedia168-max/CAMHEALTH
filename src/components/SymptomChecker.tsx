@@ -414,14 +414,19 @@ export default function SymptomChecker() {
       });
       
       let data;
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-         data = await response.json();
-      } else {
-         throw new Error(response.status === 504 ? "Server timeout (took too long). Please try again." : `Server returned an error (${response.status})`);
+      try {
+         const contentType = response.headers.get("content-type");
+         if (contentType && contentType.includes("application/json")) {
+            data = await response.json();
+         } else {
+            const rawText = await response.text();
+            throw new Error(response.status === 504 ? "Server timeout (took too long). Please try again." : `Server returned an error (${response.status}): ${rawText.substring(0, 50)}`);
+         }
+      } catch (err: any) {
+         throw new Error(`Failed to read response: ${err.message}`);
       }
       
-      const reply = data.result || data.error || 'Sorry, there was an error analyzing your symptoms.';
+      const reply = data?.result || data?.error || (response.status === 429 ? 'Rate limit exceeded. Please wait a moment.' : 'Sorry, an unexpected error occurred analyzing your symptoms.');
       
       const botMsg = { id: (Date.now() + 1).toString(), sender: 'bot' as const, text: reply };
       const finalMessages = [...updatedMessages, botMsg];
