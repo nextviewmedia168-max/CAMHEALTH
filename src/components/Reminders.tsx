@@ -267,6 +267,8 @@ export default function Reminders() {
   }, []);
 
   // Alert checking and auto-miss processing
+  const triggeredAlarmsRef = useRef<Record<string, boolean>>({});
+
   useEffect(() => {
      const interval = setInterval(() => {
         const now = new Date();
@@ -276,14 +278,25 @@ export default function Reminders() {
         let historyChanged = false;
         let updatedHistory = [...historyRef.current];
         
-        const isExactMinute = now.getSeconds() === 0;
+        // Remove old entries from check map occasionally
+        if (now.getMinutes() === 0 && now.getSeconds() === 0) {
+            triggeredAlarmsRef.current = {};
+        }
 
         currentRems.filter(r => r.isActive).forEach(rem => {
            rem.times.forEach(pt => {
               const loggedToday = updatedHistory.find(h => h.reminderId === rem.id && h.scheduledTime === pt.time && isToday(h.takenAt));
               
               if (!loggedToday) {
-                 if (isExactMinute && pt.time === currentTimeStr) {
+                 const [h, m] = pt.time.split(':').map(Number);
+                 const scheduleTime = new Date(now);
+                 scheduleTime.setHours(h, m, 0, 0);
+                 const diffMinutes = (now.getTime() - scheduleTime.getTime()) / 60000;
+                 
+                 const alarmKey = `${rem.id}-${pt.time}-${now.toLocaleDateString()}`;
+
+                 if (diffMinutes >= 0 && diffMinutes < 30 && !triggeredAlarmsRef.current[alarmKey]) {
+                     triggeredAlarmsRef.current[alarmKey] = true;
                      playChime();
                      setActivePillAlert({
                         medicineName: rem.medicineName,
@@ -292,17 +305,30 @@ export default function Reminders() {
                         time: pt.time
                      });
                     if ('Notification' in window && Notification.permission === 'granted') {
-                       new Notification(`Time for Medicine: ${rem.medicineName}`, {
-                          body: `Dosage: ${rem.dosage || '1'}\n${rem.instruction}`,
-                          icon: '/favicon.ico'
-                       });
+                       try {
+                           if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                               // Use Service Worker for better background persistence if available
+                               navigator.serviceWorker.ready.then(registration => {
+                                   registration.showNotification(`Time for Medicine: ${rem.medicineName}`, {
+                                       body: `Dosage: ${rem.dosage || '1'}\n${rem.instruction || ''}\nTime: ${pt.time}`,
+                                       icon: '/logo.png',
+                                       requireInteraction: true,
+                                       tag: alarmKey,
+                                       vibrate: [200, 100, 200, 100, 500]
+                                   });
+                               });
+                           } else {
+                               new Notification(`Time for Medicine: ${rem.medicineName}`, {
+                                  body: `Dosage: ${rem.dosage || '1'}\n${rem.instruction}`,
+                                  icon: '/logo.png',
+                                  requireInteraction: true
+                               });
+                           }
+                       } catch (e) {
+                           console.error('Notification error:', e);
+                       }
                     }
                  }
-                 
-                 const [h, m] = pt.time.split(':').map(Number);
-                 const scheduleTime = new Date();
-                 scheduleTime.setHours(h, m, 0, 0);
-                 const diffMinutes = (now.getTime() - scheduleTime.getTime()) / 60000;
                  
                  // If 60+ minutes passed and not logged, mark missed automatically
                  if (diffMinutes >= 60) {
@@ -324,7 +350,7 @@ export default function Reminders() {
             setHistory(updatedHistory);
             localStorage.setItem('camhealth_pill_history', JSON.stringify(updatedHistory));
         }
-     }, 1000);
+     }, 5000); // Check every 5 seconds instead of 1000 to save battery while backgrounded
      return () => clearInterval(interval);
   }, []);
 
@@ -434,7 +460,7 @@ export default function Reminders() {
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900 pb-20 overflow-y-auto transition-colors">
       <div className="p-4 sm:p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3 sm:gap-4 sticky top-0 z-10 shadow-sm transition-colors">
          <div className="flex justify-between items-center">
-            <h2 className="font-bold text-slate-800 dark:text-white text-lg sm:text-xl khmer-bold tracking-tight">{t.reminders}</h2>
+            <h2 className="font-bold text-slate-800 dark:text-white text-lg sm:text-xl khmer-bold tracking-tight py-1">{t.reminders}</h2>
             {view === 'list' && (
               <div className="flex items-center gap-2">
                  {(reminders.length > 0 || history.length > 0) && (
@@ -720,7 +746,10 @@ export default function Reminders() {
                     {(() => {
                       const filteredReminders = reminders.filter(rem => {
                         if (activeFilter === 'today') {
-                          return rem.isActive;
+                          return rem.isActive && rem.times.some(pt => {
+                              const st = getSlotStatus(rem.id, pt.time).state;
+                              return st !== 'taken';
+                          });
                         }
                         if (activeFilter === 'ongoing') {
                           return rem.isActive;

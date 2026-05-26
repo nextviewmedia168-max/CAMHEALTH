@@ -41,7 +41,7 @@ Important Constraints:
     });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
+      model: "gemini-3.5-flash",
       contents: chatHistory,
       config: {
         systemInstruction,
@@ -109,7 +109,7 @@ Output the summary in the requested language: ${reqLanguage}.`;
     });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
+      model: "gemini-3.5-flash",
       contents: chatHistory,
       config: {
         systemInstruction,

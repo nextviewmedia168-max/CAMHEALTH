@@ -10,11 +10,22 @@
 
 body, html, input, button, select, textarea {
   font-family: "Kantumruy Pro", ui-sans-serif, system-ui, sans-serif !important;
+  line-height: 1.6;
 }
 
 /* Make heavy elements soft & highly readable */
 .font-bold, .khmer-bold, b, strong {
   font-weight: 600 !important;
+}
+
+/* Prevent Khmer font from clipping vertically when truncated */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.5;
+  padding-top: 0.1em;
+  padding-bottom: 0.1em;
 }
 
 .font-extrabold, .font-black {

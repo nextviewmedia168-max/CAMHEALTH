@@ -18,7 +18,7 @@ interface ChatSession {
 
 let cachedCurrentSessionId: string | null = null;
 
-export default function SymptomChecker() {
+export default function SymptomChecker({ isActiveTab = true }: { isActiveTab?: boolean }) {
   const { t, language } = useLanguage();
   const [input, setInput] = useState('');
   
@@ -170,6 +170,30 @@ export default function SymptomChecker() {
   useEffect(() => {
     scrollToBottom();
   }, [activeMessages]);
+
+  useEffect(() => {
+    if (!isActiveTab) {
+      if ('speechSynthesis' in window && window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+         window.speechSynthesis.pause();
+         setIsPaused(true);
+      }
+      if (currentAudioRef.current && !currentAudioRef.current.paused) {
+         currentAudioRef.current.pause();
+         setIsPaused(true);
+      }
+    } else {
+      if (speakingMessageId && isPaused) {
+         if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+            setIsPaused(false);
+         }
+         if (currentAudioRef.current && currentAudioRef.current.paused) {
+            currentAudioRef.current.play().catch(() => {});
+            setIsPaused(false);
+         }
+      }
+    }
+  }, [isActiveTab]);
 
   const stopSpeech = () => {
     if (currentAudioRef.current) {
@@ -512,7 +536,7 @@ export default function SymptomChecker() {
          <button onClick={() => setShowHistory(true)} className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-100 rounded-full transition-colors" title="History">
             <History size={18} />
          </button>
-         <h2 className="font-bold text-slate-800 dark:text-white khmer-bold text-center pl-2 flex-1 tracking-tight text-base sm:text-lg truncate">{t.checkSymptoms}</h2>
+         <h2 className="font-bold text-slate-800 dark:text-white khmer-bold text-center pl-2 flex-1 tracking-tight text-base sm:text-lg truncate py-1">{t.checkSymptoms}</h2>
          <div className="flex items-center gap-0.5 sm:gap-1">
             {activeMessages.length > 1 && (
                <button onClick={handleSummarize} className="p-2 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-full transition-colors flex items-center justify-center" title="Summarize for Doctor">

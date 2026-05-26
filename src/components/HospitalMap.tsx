@@ -104,11 +104,16 @@ function PlacesLayer({ location, onPlacesFound }: { location: {lat: number, lng:
       }
     };
 
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 8000);
+
     fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
-      body: query
+      body: query,
+      signal: abortController.signal
     })
     .then(async res => {
+      clearTimeout(timeoutId);
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
@@ -246,7 +251,7 @@ export default function HospitalMap() {
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900 relative transition-colors">
       <div className="p-3 sm:p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 sticky top-0 flex items-center justify-between shrink-0 transition-colors">
          <div className="w-8"></div>
-         <h2 className="font-bold text-slate-800 dark:text-white text-center text-base sm:text-lg">{t.hospitalsNearby}</h2>
+         <h2 className="font-bold text-slate-800 dark:text-white text-center text-base sm:text-lg py-1">{t.hospitalsNearby}</h2>
          <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 rounded-full transition-colors shadow-sm" title="Refresh Location" onClick={getUserLocation}>
             <Compass size={18} />
          </button>

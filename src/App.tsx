@@ -165,18 +165,6 @@ function AppContent() {
     setIsAuthenticated(true);
   };
 
-  const renderTab = () => {
-    switch (activeTab) {
-      case 'home': return <Home onTabChange={setActiveTab} />;
-      case 'symptoms': return <SymptomChecker />;
-      case 'map': return <HospitalMap />;
-      case 'reminders': return <Reminders />;
-      case 'profile': return <Profile />;
-      case 'about': return <About />;
-      default: return <Home onTabChange={setActiveTab} />;
-    }
-  };
-
   return (
     <div className="fixed inset-0 bg-slate-100 dark:bg-slate-950 flex font-sans overflow-hidden text-slate-800 dark:text-slate-100 transition-colors duration-500">
       <OfflineIndicator />
@@ -246,7 +234,7 @@ function AppContent() {
                  <img src="/logo.png" alt="CamHealth" className="w-full h-full object-contain p-1" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling!.classList.remove('hidden'); }} />
                  <HeartPulse size={26} className="text-blue-600 drop-shadow-md hidden" />
               </div>
-              <h1 className="font-extrabold text-2xl khmer-bold text-slate-800 dark:text-slate-100 hidden lg:block tracking-tight text-nowrap">CamHealth</h1>
+              <h1 className="font-extrabold text-2xl khmer-bold text-slate-800 dark:text-slate-100 hidden lg:block tracking-tight text-nowrap py-1">CamHealth</h1>
            </div>
            
            <div className="flex-1 px-4 py-6 flex flex-col gap-2 relative">
@@ -304,7 +292,7 @@ function AppContent() {
                    <img src="/logo.png" alt="CamHealth" className="w-full h-full object-contain p-0.5" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling!.classList.remove('hidden'); }} />
                    <HeartPulse size={18} className="hidden drop-shadow-md" />
                 </div>
-                <h1 className="font-bold text-lg sm:text-xl khmer-bold text-slate-800 dark:text-white tracking-tight">CamHealth</h1>
+                <h1 className="font-bold text-lg sm:text-xl khmer-bold text-slate-800 dark:text-white tracking-tight py-1">CamHealth</h1>
              </div>
              <div className="flex items-center gap-2">
                 <button onClick={() => window.location.reload()} className="p-2 sm:p-2.5 rounded-lg text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
@@ -325,18 +313,26 @@ function AppContent() {
           </div>
 
           <div className="flex-1 overflow-hidden relative min-h-0">
-            <AnimatePresence mode="wait">
-               <motion.div
-                 key={activeTab}
-                 initial={{ opacity: 0, y: 10 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 exit={{ opacity: 0, y: -10 }}
-                 transition={{ duration: 0.3 }}
-                 className="h-full w-full"
-               >
-                 {renderTab()}
-               </motion.div>
-            </AnimatePresence>
+             <div className="h-full w-full relative bg-transparent">
+                 <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'home' ? 'opacity-100 z-10 translate-y-0' : 'opacity-0 z-0 pointer-events-none translate-y-4'}`}>
+                    <Home onTabChange={setActiveTab} />
+                 </div>
+                 <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'symptoms' ? 'opacity-100 z-10 translate-y-0' : 'opacity-0 z-0 pointer-events-none translate-y-4'}`}>
+                    <SymptomChecker isActiveTab={activeTab === 'symptoms'} />
+                 </div>
+                 <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'map' ? 'opacity-100 z-10 translate-y-0' : 'opacity-0 z-0 pointer-events-none translate-y-4'}`}>
+                    <HospitalMap />
+                 </div>
+                 <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'reminders' ? 'opacity-100 z-10 translate-y-0' : 'opacity-0 z-0 pointer-events-none translate-y-4'}`}>
+                    <Reminders />
+                 </div>
+                 <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'profile' ? 'opacity-100 z-10 translate-y-0' : 'opacity-0 z-0 pointer-events-none translate-y-4'}`}>
+                    <Profile />
+                 </div>
+                 <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'about' ? 'opacity-100 z-10 translate-y-0' : 'opacity-0 z-0 pointer-events-none translate-y-4'}`}>
+                    <About />
+                 </div>
+             </div>
           </div>
         </div>
 
