@@ -40,6 +40,15 @@ Important Constraints:
        parts: [{ text }]
     });
 
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ 
+        error: "Missing API Key", 
+        result: reqLanguage === 'Khmer'
+          ? "សូមអភ័យទោស តម្រូវឱ្យមានកូនសោ API (GEMINI_API_KEY) សម្រាប់ការប្រើប្រាស់។ សូមកំណត់វានៅក្នុងការកំណត់ Vercel Environment Variables របស់អ្នក។"
+          : "Sorry, the GEMINI_API_KEY is missing. Please configure it in your Vercel Environment Variables."
+      });
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
       contents: chatHistory,
@@ -107,6 +116,15 @@ Output the summary in the requested language: ${reqLanguage}.`;
        role: 'user',
        parts: [{ text: "Please generate the summary now." }]
     });
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ 
+        error: "Missing API Key", 
+        result: reqLanguage === 'Khmer'
+          ? "សូមអភ័យទោស តម្រូវឱ្យមានកូនសោ API (GEMINI_API_KEY) សម្រាប់ការប្រើប្រាស់។ សូមកំណត់វានៅក្នុងការកំណត់ Vercel Environment Variables របស់អ្នក។"
+          : "Sorry, the GEMINI_API_KEY is missing. Please configure it in your Vercel Environment Variables."
+      });
+    }
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
