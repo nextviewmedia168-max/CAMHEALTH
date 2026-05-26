@@ -57,7 +57,19 @@ export default function SymptomChecker({ isActiveTab = true }: { isActiveTab?: b
 
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const speakingMessageIdRef = useRef<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
+
+  useEffect(() => {
+     speakingMessageIdRef.current = speakingMessageId;
+  }, [speakingMessageId]);
+
+  useEffect(() => {
+     isPausedRef.current = isPaused;
+  }, [isPaused]);
+
+  const wasAutoPausedRef = useRef(false);
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [isConfirmingClearHistory, setIsConfirmingClearHistory] = useState<boolean>(false);
   const stopRequestedRef = useRef<boolean>(false);
@@ -176,13 +188,14 @@ export default function SymptomChecker({ isActiveTab = true }: { isActiveTab?: b
       if ('speechSynthesis' in window && window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
          window.speechSynthesis.pause();
          setIsPaused(true);
-      }
-      if (currentAudioRef.current && !currentAudioRef.current.paused) {
+         wasAutoPausedRef.current = true;
+      } else if (currentAudioRef.current && !currentAudioRef.current.paused) {
          currentAudioRef.current.pause();
          setIsPaused(true);
+         wasAutoPausedRef.current = true;
       }
     } else {
-      if (speakingMessageId && isPaused) {
+      if (wasAutoPausedRef.current) {
          if ('speechSynthesis' in window && window.speechSynthesis.paused) {
             window.speechSynthesis.resume();
             setIsPaused(false);
@@ -191,6 +204,7 @@ export default function SymptomChecker({ isActiveTab = true }: { isActiveTab?: b
             currentAudioRef.current.play().catch(() => {});
             setIsPaused(false);
          }
+         wasAutoPausedRef.current = false;
       }
     }
   }, [isActiveTab]);
