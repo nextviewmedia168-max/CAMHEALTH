@@ -50,7 +50,7 @@ Important Constraints:
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: chatHistory,
       config: {
         systemInstruction,
@@ -72,12 +72,13 @@ Important Constraints:
     
     res.json({ result: replyText });
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
-    
     // Check for rate limit
     if (error?.status === 429 || error?.message?.includes('429')) {
+       console.warn("Gemini Rate Limit Exceeded (429)");
        return res.status(429).json({ result: reqLanguage === 'Khmer' ? 'សូមអភ័យទោស ប្រព័ន្ធកំពុងមមាញឹក។ សូមព្យាយាមម្តងទៀតក្នុងរយៈពេលមួយនាទី។' : 'Sorry, the system is currently busy (Rate Limit). Please try again in a minute.' });
     }
+    
+    console.error("Gemini API Error:", error);
     
     res.status(500).json({ 
       error: "Failed to fetch response", 
@@ -127,7 +128,7 @@ Output the summary in the requested language: ${reqLanguage}.`;
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: chatHistory,
       config: {
         systemInstruction,
@@ -149,11 +150,12 @@ Output the summary in the requested language: ${reqLanguage}.`;
     
     res.json({ result: summaryText });
   } catch (error: any) {
-    console.error("Gemini API Summarize Error:", error);
-    
     if (error?.status === 429 || error?.message?.includes('429')) {
+       console.warn("Gemini Rate Limit Exceeded (429) on summarize");
        return res.status(429).json({ result: reqLanguage === 'Khmer' ? 'សូមអភ័យទោស ប្រព័ន្ធកំពុងមមាញឹក។ សូមព្យាយាមម្តងទៀតក្នុងរយៈពេលមួយនាទី។' : 'Sorry, the system is currently busy (Rate Limit). Please try again in a minute.' });
     }
+    
+    console.error("Gemini API Summarize Error:", error);
     
     res.status(500).json({ 
       error: "Failed to generate summary.", 

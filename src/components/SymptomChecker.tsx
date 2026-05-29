@@ -546,12 +546,16 @@ export default function SymptomChecker({ isActiveTab = true }: { isActiveTab?: b
 
   return (
     <div className="flex flex-col h-full w-full max-w-full overflow-hidden bg-slate-50 dark:bg-slate-900 relative transition-colors">
-      <div className="p-3 sm:p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between sticky top-0 z-10 shadow-sm transition-colors">
-         <button onClick={() => setShowHistory(true)} className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-100 rounded-full transition-colors" title="History">
-            <History size={18} />
-         </button>
-         <h2 className="font-bold text-slate-800 dark:text-white khmer-bold text-center pl-2 flex-1 tracking-tight text-base sm:text-lg truncate py-1">{t.checkSymptoms}</h2>
-         <div className="flex items-center gap-0.5 sm:gap-1">
+      <div className="p-3 sm:p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between sticky top-0 z-10 shadow-sm transition-colors relative">
+         <div className="flex items-center z-10 min-w-[80px]">
+            <button onClick={() => setShowHistory(true)} className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-100 rounded-full transition-colors" title="History">
+               <History size={18} />
+            </button>
+         </div>
+         <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-0">
+            <h2 className="font-bold text-slate-800 dark:text-white khmer-bold text-center tracking-tight text-base sm:text-lg truncate py-1 px-8">{t.checkSymptoms}</h2>
+         </div>
+         <div className="flex items-center gap-0.5 sm:gap-1 z-10 justify-end min-w-[80px]">
             {activeMessages.length > 1 && (
                <button onClick={handleSummarize} className="p-2 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-full transition-colors flex items-center justify-center" title="Summarize for Doctor">
                   <ClipboardList size={18} />

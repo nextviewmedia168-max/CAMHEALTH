@@ -34,8 +34,8 @@ export default function About() {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900 overflow-y-auto pb-6 transition-colors">
-      <div className="p-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/80 sticky top-0 z-10 shadow-sm transition-colors">
-         <h2 className="font-semibold text-slate-800 dark:text-slate-100 text-xl khmer-bold">{t.about}</h2>
+      <div className="p-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/80 sticky top-0 z-10 shadow-sm transition-colors text-center">
+         <h2 className="font-semibold text-slate-800 dark:text-slate-100 text-xl khmer-bold inline-block">{t.about}</h2>
       </div>
 
       <div className="p-6 space-y-6 max-w-4xl mx-auto w-full">

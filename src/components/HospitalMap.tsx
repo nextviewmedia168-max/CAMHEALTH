@@ -3,7 +3,7 @@ import { useLanguage } from '../lib/LanguageContext';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Loader2, Navigation, Map as MapIcon, Compass } from 'lucide-react';
+import { Loader2, Navigation, Map as MapIcon, Compass, Phone, Clock } from 'lucide-react';
 
 // Fix Leaflet marker icons issue in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -36,8 +36,17 @@ interface Place {
   lon: number;
   tags: {
     name?: string;
+    'name:en'?: string;
+    'name:km'?: string;
+    name_en?: string;
+    name_km?: string;
+    name_kh?: string;
+    brand?: string;
     amenity?: string;
     healthcare?: string;
+    phone?: string;
+    'contact:phone'?: string;
+    opening_hours?: string;
   };
 }
 
@@ -56,11 +65,16 @@ function PlacesLayer({ location, onPlacesFound }: { location: {lat: number, lng:
     const query = `
       [out:json];
       (
-        node["amenity"="hospital"](around:5000, ${location.lat}, ${location.lng});
-        node["amenity"="clinic"](around:5000, ${location.lat}, ${location.lng});
-        node["amenity"="pharmacy"](around:5000, ${location.lat}, ${location.lng});
+        nwr["amenity"="hospital"](around:5000, ${location.lat}, ${location.lng});
+        nwr["amenity"="clinic"](around:5000, ${location.lat}, ${location.lng});
+        nwr["amenity"="doctors"](around:5000, ${location.lat}, ${location.lng});
+        nwr["amenity"="dentist"](around:5000, ${location.lat}, ${location.lng});
+        nwr["amenity"="pharmacy"](around:5000, ${location.lat}, ${location.lng});
+        nwr["healthcare"](around:5000, ${location.lat}, ${location.lng});
+        nwr["building"="hospital"](around:5000, ${location.lat}, ${location.lng});
+        nwr["building"="clinic"](around:5000, ${location.lat}, ${location.lng});
       );
-      out body;
+      out center;
     `;
 
     let mounted = true;
@@ -127,11 +141,20 @@ function PlacesLayer({ location, onPlacesFound }: { location: {lat: number, lng:
     .then(data => {
       if (!mounted) return;
       if (data && data.elements && data.elements.length > 0) {
-        setPlaces(data.elements);
+        const processedPlaces = data.elements
+          .map((e: any) => ({
+             id: e.id,
+             lat: e.lat || e.center?.lat || 0,
+             lon: e.lon || e.center?.lon || 0,
+             tags: e.tags || {}
+          }))
+          .filter((p: Place) => p.lat !== 0 && p.lon !== 0);
+
+        setPlaces(processedPlaces);
         
         const userLatLng = L.latLng(location.lat, location.lng);
         
-        const sortedPlaces = data.elements.map((p: Place) => {
+        const sortedPlaces = processedPlaces.map((p: Place) => {
            const dist = userLatLng.distanceTo(L.latLng(p.lat, p.lon));
            const distanceStr = dist > 1000 ? (dist/1000).toFixed(1) + ' km' : Math.round(dist) + ' m';
            return { ...p, distanceVal: dist, distanceStr };
@@ -166,11 +189,17 @@ function PlacesLayer({ location, onPlacesFound }: { location: {lat: number, lng:
         <Marker key={p.id} position={[p.lat, p.lon]} icon={hospitalIcon}>
            <Popup>
               <div className="font-sans text-slate-900">
-                 <strong className="block mb-1 text-sm">{p.tags.name || p.tags.amenity?.replace('_',' ') || 'Healthcare Facility'}</strong>
+                 <strong className="block mb-1 text-sm capitalize">{p.tags.name || p.tags['name:en'] || p.tags.name_en || p.tags['name:km'] || p.tags.name_km || p.tags.name_kh || p.tags.brand || p.tags.amenity?.replace('_',' ') || 'Healthcare Facility'}</strong>
+                 { (p.tags.phone || p.tags['contact:phone']) && (
+                   <div className="text-xs text-slate-600 mt-1 flex items-center gap-1"><Phone size={12} className="opacity-70" /> {p.tags.phone || p.tags['contact:phone']}</div>
+                 )}
+                 { p.tags.opening_hours && (
+                   <div className="text-xs text-slate-600 mt-0.5 flex items-center gap-1 leading-tight"><Clock size={12} className="opacity-70" /> {p.tags.opening_hours}</div>
+                 )}
                  <a 
-                   href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}`} 
+                   href={`https://maps.google.com/maps?daddr=${p.lat},${p.lon}`} 
                    target="_blank" rel="noopener noreferrer"
-                   className="text-blue-600 font-medium text-xs flex items-center gap-1 hover:underline mt-1"
+                   className="text-blue-600 font-medium text-xs flex items-center gap-1 hover:underline mt-1.5"
                  >
                    <MapIcon size={12} /> Directions
                  </a>
@@ -249,12 +278,16 @@ export default function HospitalMap() {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900 relative transition-colors">
-      <div className="p-3 sm:p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 sticky top-0 flex items-center justify-between shrink-0 transition-colors">
-         <div className="w-8"></div>
-         <h2 className="font-bold text-slate-800 dark:text-white text-center text-base sm:text-lg py-1">{t.hospitalsNearby}</h2>
-         <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 rounded-full transition-colors shadow-sm" title="Refresh Location" onClick={getUserLocation}>
-            <Compass size={18} />
-         </button>
+      <div className="p-3 sm:p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 sticky top-0 flex items-center justify-between shrink-0 transition-colors relative">
+         <div className="min-w-[40px] z-10"></div>
+         <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-0">
+            <h2 className="font-bold text-slate-800 dark:text-white text-center text-base sm:text-lg py-1 px-8">{t.hospitalsNearby}</h2>
+         </div>
+         <div className="min-w-[40px] flex justify-end z-10">
+            <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 rounded-full transition-colors shadow-sm" title="Refresh Location" onClick={getUserLocation}>
+               <Compass size={18} />
+            </button>
+         </div>
       </div>
 
       {/* Map Area */}
@@ -311,12 +344,20 @@ export default function HospitalMap() {
                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0 bg-slate-100 dark:bg-slate-700 ring-1 ring-black/5 dark:ring-white/10 group-hover:scale-105 transition-transform"
                     />
                     <div className="flex-1 min-w-0">
-                       <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm sm:text-base mb-1">{h.tags.name || h.tags.amenity?.replace('_', ' ') || 'Healthcare Facility'}</h4>
-                       <div className="flex gap-2 items-center mb-2 sm:mb-3">
+                       <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm sm:text-base mb-1 capitalize">{h.tags.name || h.tags['name:en'] || h.tags.name_en || h.tags['name:km'] || h.tags.name_km || h.tags.name_kh || h.tags.brand || h.tags.amenity?.replace('_', ' ') || 'Healthcare Facility'}</h4>
+                       <div className="flex gap-2 items-center mb-1.5 sm:mb-2">
                          <span className="bg-blue-50 dark:bg-slate-700/80 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-bold uppercase tracking-wider border border-blue-200 dark:border-blue-900/50">{h.distanceStr} away</span>
                        </div>
+                       
+                       { (h.tags.phone || h.tags['contact:phone'] || h.tags.opening_hours) && (
+                         <div className="flex flex-col gap-1 mb-2 sm:mb-3 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
+                           { (h.tags.phone || h.tags['contact:phone']) && <div className="flex items-center gap-1.5"><Phone size={12} className="text-blue-500 opacity-70"/> {h.tags.phone || h.tags['contact:phone']}</div>}
+                           { h.tags.opening_hours && <div className="flex items-center gap-1.5 truncate" title={h.tags.opening_hours}><Clock size={12} className="text-amber-500 opacity-70"/> {h.tags.opening_hours}</div>}
+                         </div>
+                       )}
+
                        <a 
-                         href={`https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lon}`}
+                         href={`https://maps.google.com/maps?daddr=${h.lat},${h.lon}`}
                          target="_blank" rel="noopener noreferrer"
                          className="inline-flex w-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 py-1.5 sm:py-2 rounded-lg sm:rounded-xl items-center justify-center gap-1.5 text-[10px] sm:text-xs font-bold transition-colors ring-1 ring-slate-200 dark:ring-slate-600"
                        >

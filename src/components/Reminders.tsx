@@ -458,11 +458,14 @@ export default function Reminders() {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900 pb-20 overflow-y-auto transition-colors">
-      <div className="p-4 sm:p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3 sm:gap-4 sticky top-0 z-10 shadow-sm transition-colors">
-         <div className="flex justify-between items-center">
-            <h2 className="font-bold text-slate-800 dark:text-white text-lg sm:text-xl khmer-bold tracking-tight py-1">{t.reminders}</h2>
-            {view === 'list' && (
-              <div className="flex items-center gap-2">
+      <div className="p-4 sm:p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3 sm:gap-4 sticky top-0 z-10 shadow-sm transition-colors relative">
+         <div className="flex justify-between items-center relative">
+            <div className="z-10 min-w-[80px]"></div>
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-0">
+               <h2 className="font-bold text-slate-800 dark:text-white text-lg sm:text-xl khmer-bold tracking-tight py-1 px-4 text-center">{t.reminders}</h2>
+            </div>
+            {view === 'list' ? (
+              <div className="flex items-center gap-2 z-10 justify-end min-w-[80px]">
                  {(reminders.length > 0 || history.length > 0) && (
                     isConfirmingClear ? (
                        <button 
@@ -503,11 +506,13 @@ export default function Reminders() {
                    <Plus size={20} className="hidden sm:block" />
                  </button>
               </div>
-            )}
+            ) : null}
             {(view === 'add' || view === 'history') && (
-              <button onClick={() => setView('list')} className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50">
-                 {t.backToList}
-              </button>
+              <div className="flex items-center gap-2 z-10 justify-end min-w-[80px]">
+                  <button onClick={() => setView('list')} className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50">
+                     {t.backToList}
+                  </button>
+              </div>
             )}
          </div>
          
